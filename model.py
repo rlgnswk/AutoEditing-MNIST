@@ -90,7 +90,7 @@ class netG(nn.Module):
                        stride = 1) # Layer 1
 
     def forward(self, x):
-        noise = torch.randn(x.size()) * 0.1 # std 0.1
+        #noise = torch.randn(x.size()) * 0.1 # std 0.1
         
         x = self.Conv_block1(x)
         x4concat = self.Conv_block2(x)
@@ -98,6 +98,7 @@ class netG(nn.Module):
         x = self.Conv_block3(x)
         
         x = self.pool1(x)
+        noise = torch.randn(x.size()) #* 0.1 # std 0.1
         x = self.Conv_block3p5(x)
         x = self.up0p5(x)
         

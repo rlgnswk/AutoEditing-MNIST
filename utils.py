@@ -14,7 +14,7 @@ def loss_plot(count ,acc, title):
 def file_generator(name):
     current_path = os.getcwd()
 
-    experiment_folder = current_path + '\\' + name
+    experiment_folder = current_path +'\\'+ "experiments" +'\\' + name
     os.mkdir(experiment_folder)
 
     recon_path = experiment_folder + '\\recon'
