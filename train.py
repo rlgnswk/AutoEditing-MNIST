@@ -53,7 +53,7 @@ for para in netR.parameters():
 lr = 0.001
 beta1 = 0.5
 
-optimizerR = optim.Adam(netG.parameters(), lr=lr, betas=(beta1, 0.999))
+optimizerG = optim.Adam(netG.parameters(), lr=lr)
 criterion = nn.L1Loss()
 
 num_epochs = 1
@@ -68,7 +68,7 @@ for epoch in range(num_epochs):
         recon = netG(inputs)
         errR = criterion(recon, inputs)
         errR.backward()
-        optimizerR.step()
+        optimizerG.step()
 
         #print
         if i % 500 == 0:
@@ -83,7 +83,7 @@ criterionR = nn.CrossEntropyLoss()
 criterionD = nn.BCELoss()
 lr = 0.001
 optimizerD = optim.Adam(netD.parameters(), lr=lr)
-optimizerG = optim.Adam(netG.parameters(), lr=lr)
+#optimizerG = optim.Adam(netG.parameters(), lr=lr)
 #optimizerR = optim.Adam(netG.parameters(), lr=lr)
 
 # 통과한게 false
@@ -94,7 +94,7 @@ errG_R_list = []
 count = 0
 count_list = []
 
-num_epochs = 1000
+num_epochs = 10
 for epoch in range(num_epochs):
     for i, data in enumerate(trainDataLoader, 0):
         count = count + 1
@@ -127,13 +127,18 @@ for epoch in range(num_epochs):
         #Update G network
         netG.zero_grad()
         output = netD(fake.detach()).view(-1)
-        errG_D = criterionD(output, label_false)
+        errG_D = criterionD(output, label_true)
     
-        #Update R network
+        #Update G network
         netR.zero_grad()
-        output = netR(fake.detach())
-        errG_R = criterionR(output, labels)
+        output_fake = netR(fake.detach())
+        output_true = netR(inputs4NetG.detach())
 
+        errG_R_fake = criterionR(output_fake, labels)
+        errG_R_true = criterionR(output_true, labels)
+        # errG_R_fake < errG_R_true 이여야 더 좋아진 성능
+        treshold = 1
+        errG_R = max(errG_R_fake - errG_R_true + treshold, 0)
         
         errG_total = errG_D + errG_R
         errG_total.backward()

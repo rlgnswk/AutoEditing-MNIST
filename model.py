@@ -18,11 +18,30 @@ class netD(nn.Module):
         x = self.fc1(x)  # 30 -> 10
         x = torch.sigmoid(x) # Activation function 
         return x
-    
+
 
 class netR(nn.Module):
     def __init__(self):
-        super(netR, self).__init__() 
+        super(netR, self).__init__()
+        self.conv0 = nn.Conv2d(in_channels = 1,
+                               out_channels = 8,
+                               kernel_size = 6,
+                               stride = 2) # Layer 1
+        self.conv0_bn = nn.BatchNorm2d(8)  # 2d batch-norm is used in 3d inputs
+        self.fc = nn.Linear(8*12*12, 10)   # Layer 2 
+
+    def forward(self, x):
+        x = self.conv0(x)
+        x = self.conv0_bn(x)
+        x = F.relu(x)
+        x = x.view(x.shape[0], -1)
+        x = self.fc(x)
+        return x
+
+
+class netR_old(nn.Module):
+    def __init__(self):
+        super(netR_old, self).__init__() 
         # an affine operation: y = Wx + b
         self.fc0 = nn.Linear(28*28,10)
         self.fc1 = nn.Linear(10, 10)
@@ -75,7 +94,9 @@ class netG(nn.Module):
                                align_corners=True)#28*28
         
         self.Conv_block4 = Conv_block(128,64)
-        
+        ##concat with conv3 feature map
+        self.Conv_block4p5 = Conv_block(128,64)
+
         self.up1 = nn.Upsample(scale_factor=2, mode='bilinear', 
                                align_corners=True)#28*28
 
@@ -95,18 +116,23 @@ class netG(nn.Module):
         x = self.Conv_block1(x)
         x4concat = self.Conv_block2(x)
         x = self.pool0(x4concat)
-        x = self.Conv_block3(x)
-        
-        x = self.pool1(x)
+
+        x4concat2 = self.Conv_block3(x)
+        x = self.pool1(x4concat2)
+
         noise = torch.randn(x.size()) #* 0.1 # std 0.1
         x = self.Conv_block3p5(x)
+
         x = self.up0p5(x)
-        
         x = self.Conv_block4(x)
+        x = torch.cat((x, x4concat2), dim=1)
+        x = self.Conv_block4p5(x)
+
         x = self.up1(x)
         x = self.Conv_block5(x)
         x = torch.cat((x, x4concat), dim=1)
         x = self.Conv_block6(x)
+
         output = self.conv_last(x)
         
         return output
